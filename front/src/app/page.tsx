@@ -11,7 +11,7 @@ export default function Home() {
   const [mode, setMode] = useState("AM");
 
   const fetchSignal = async () => {
-    const res = await fetch("http://localhost:8000/process-signal", {
+    const res = await fetch("https://ac-project-theta.vercel.app/process-signal", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
