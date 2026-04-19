@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import { AlertCircle, Zap, BarChart3 } from 'lucide-react';
 
-const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
+const Plot = dynamic(() => import('react-plotly.js'), { ssr: false }) as any;
 
 interface SignalResponse {
   time: number[];
@@ -51,19 +51,16 @@ export default function SignalProcessor() {
     try {
       const text = await file.text();
       
-      // Try to parse as CSV, JSON, or space/comma separated values
       let signal: number[] = [];
       
       if (file.name.endsWith('.json')) {
         signal = JSON.parse(text);
       } else if (file.name.endsWith('.csv')) {
-        // Parse CSV - can be single column or multiple columns
         const lines = text.trim().split('\n');
         signal = lines
           .map(line => parseFloat(line.split(',')[0]))
           .filter(val => !isNaN(val));
       } else {
-        // Try to parse as space, comma, or newline separated values
         signal = text
           .split(/[\s,\n]+/)
           .map(val => parseFloat(val))
@@ -197,13 +194,32 @@ export default function SignalProcessor() {
           background: rgba(15, 23, 42, 0.7);
           backdrop-filter: blur(10px);
           padding: 1.5rem;
-          margin-bottom: 2rem;
+          margin-bottom: 3rem;
           transition: all 0.3s ease;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
         }
 
         .plot-container:hover {
           border-color: rgba(0, 255, 136, 0.4);
           background: rgba(15, 23, 42, 0.9);
+        }
+
+        .plot-wrapper {
+          width: 100%;
+          overflow: hidden;
+          flex: 1;
+        }
+
+        .plot-wrapper-small {
+          height: 350px;
+          width: 100%;
+        }
+
+        .plot-wrapper-large {
+          height: 450px;
+          width: 100%;
         }
 
         .control-panel {
@@ -381,8 +397,12 @@ export default function SignalProcessor() {
           gap: 1rem;
         }
 
-        h1, h2, h3 {
-          margin: 0;
+        .space-y-8 > * + * {
+          margin-top: 2rem;
+        }
+
+        .space-y-8 > .plot-container {
+          margin-bottom: 3rem;
         }
       `}
       </style>
@@ -601,7 +621,7 @@ export default function SignalProcessor() {
               <div className="info-title">⚡ About This Tool</div>
               <p>
                 This simulator demonstrates how AWGN affects AM (Amplitude Modulation) and FM (Frequency Modulation) 
-                signals at different SNR levels. Process your signal to visualize the impact of noise on both modulation schemes.
+                signals at different SNR levels. You can use a default sine wave, upload a custom signal, or enter values manually.
               </p>
             </div>
           </div>
@@ -648,55 +668,18 @@ export default function SignalProcessor() {
                 <div className="space-y-8">
                   <div className="plot-container">
                     <h3 className="tech-label mb-4">Message Signal</h3>
-                    <Plot
-                      data={[
-                        {
-                          x: data.time,
-                          y: data.message,
-                          type: 'scatter',
-                          mode: 'lines',
-                          line: { color: '#00ff88', width: 2 },
-                          name: 'Message',
-                          hoverinfo: 'x+y',
-                        },
-                      ]}
-                      layout={{
-                        margin: { l: 50, r: 50, t: 30, b: 50 },
-                        paper_bgcolor: 'rgba(0,0,0,0)',
-                        plot_bgcolor: 'rgba(30,41,82,0.2)',
-                        xaxis: {
-                          showgrid: true,
-                          gridcolor: 'rgba(0,255,136,0.1)',
-                          color: '#a0adc4',
-                          title: 'Time (s)',
-                        },
-                        yaxis: {
-                          showgrid: true,
-                          gridcolor: 'rgba(0,255,136,0.1)',
-                          color: '#a0adc4',
-                          title: 'Amplitude',
-                        },
-                        font: { family: 'IBM Plex Mono, monospace', color: '#a0adc4' },
-                        responsive: true,
-                      }}
-                      config={{ responsive: true, displayModeBar: false }}
-                      style={{ height: '300px' }}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="plot-container">
-                      <h3 className="tech-label mb-4">AM Signal (Clean)</h3>
+                    <div className="plot-wrapper plot-wrapper-small">
                       <Plot
                         data={[
                           {
-                            x: data.time.slice(0, Math.min(500, data.time.length)),
-                            y: data.am.slice(0, Math.min(500, data.am.length)),
+                            x: data.time,
+                            y: data.message,
                             type: 'scatter',
                             mode: 'lines',
-                            line: { color: '#0099ff', width: 1.5 },
-                            name: 'AM Signal',
-                          },
+                            line: { color: '#00ff88', width: 2 },
+                            name: 'Message',
+                            hoverinfo: 'x+y',
+                          } as any,
                         ]}
                         layout={{
                           margin: { l: 50, r: 50, t: 30, b: 50 },
@@ -704,57 +687,97 @@ export default function SignalProcessor() {
                           plot_bgcolor: 'rgba(30,41,82,0.2)',
                           xaxis: {
                             showgrid: true,
-                            gridcolor: 'rgba(0,153,255,0.1)',
+                            gridcolor: 'rgba(0,255,136,0.1)',
                             color: '#a0adc4',
                             title: 'Time (s)',
-                          },
+                          } as any,
                           yaxis: {
                             showgrid: true,
-                            gridcolor: 'rgba(0,153,255,0.1)',
+                            gridcolor: 'rgba(0,255,136,0.1)',
                             color: '#a0adc4',
-                          },
-                          font: { family: 'IBM Plex Mono, monospace', color: '#a0adc4' },
+                            title: 'Amplitude',
+                          } as any,
+                          font: { family: 'IBM Plex Mono, monospace', color: '#a0adc4' } as any,
                           responsive: true,
-                        }}
-                        config={{ responsive: true, displayModeBar: false }}
-                        style={{ height: '300px' }}
+                        } as any}
+                        config={{ responsive: true, displayModeBar: false } as any}
                       />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="plot-container">
+                      <h3 className="tech-label mb-4">AM Signal (Clean)</h3>
+                      <div className="plot-wrapper plot-wrapper-small">
+                        <Plot
+                          data={[
+                            {
+                              x: data.time.slice(0, Math.min(500, data.time.length)),
+                              y: data.am.slice(0, Math.min(500, data.am.length)),
+                              type: 'scatter',
+                              mode: 'lines',
+                              line: { color: '#0099ff', width: 1.5 },
+                              name: 'AM Signal',
+                            } as any,
+                          ]}
+                          layout={{
+                            margin: { l: 50, r: 50, t: 30, b: 50 },
+                            paper_bgcolor: 'rgba(0,0,0,0)',
+                            plot_bgcolor: 'rgba(30,41,82,0.2)',
+                            xaxis: {
+                              showgrid: true,
+                              gridcolor: 'rgba(0,153,255,0.1)',
+                              color: '#a0adc4',
+                              title: 'Time (s)',
+                            } as any,
+                            yaxis: {
+                              showgrid: true,
+                              gridcolor: 'rgba(0,153,255,0.1)',
+                              color: '#a0adc4',
+                            } as any,
+                            font: { family: 'IBM Plex Mono, monospace', color: '#a0adc4' } as any,
+                            responsive: true,
+                          } as any}
+                          config={{ responsive: true, displayModeBar: false } as any}
+                        />
+                      </div>
                     </div>
 
                     <div className="plot-container">
                       <h3 className="tech-label mb-4">FM Signal (Clean)</h3>
-                      <Plot
-                        data={[
-                          {
-                            x: data.time.slice(0, Math.min(500, data.time.length)),
-                            y: data.fm.slice(0, Math.min(500, data.fm.length)),
-                            type: 'scatter',
-                            mode: 'lines',
-                            line: { color: '#ff6b9d', width: 1.5 },
-                            name: 'FM Signal',
-                          },
-                        ]}
-                        layout={{
-                          margin: { l: 50, r: 50, t: 30, b: 50 },
-                          paper_bgcolor: 'rgba(0,0,0,0)',
-                          plot_bgcolor: 'rgba(30,41,82,0.2)',
-                          xaxis: {
-                            showgrid: true,
-                            gridcolor: 'rgba(255,107,157,0.1)',
-                            color: '#a0adc4',
-                            title: 'Time (s)',
-                          },
-                          yaxis: {
-                            showgrid: true,
-                            gridcolor: 'rgba(255,107,157,0.1)',
-                            color: '#a0adc4',
-                          },
-                          font: { family: 'IBM Plex Mono, monospace', color: '#a0adc4' },
-                          responsive: true,
-                        }}
-                        config={{ responsive: true, displayModeBar: false }}
-                        style={{ height: '300px' }}
-                      />
+                      <div className="plot-wrapper plot-wrapper-small">
+                        <Plot
+                          data={[
+                            {
+                              x: data.time.slice(0, Math.min(500, data.time.length)),
+                              y: data.fm.slice(0, Math.min(500, data.fm.length)),
+                              type: 'scatter',
+                              mode: 'lines',
+                              line: { color: '#ff6b9d', width: 1.5 },
+                              name: 'FM Signal',
+                            } as any,
+                          ]}
+                          layout={{
+                            margin: { l: 50, r: 50, t: 30, b: 50 },
+                            paper_bgcolor: 'rgba(0,0,0,0)',
+                            plot_bgcolor: 'rgba(30,41,82,0.2)',
+                            xaxis: {
+                              showgrid: true,
+                              gridcolor: 'rgba(255,107,157,0.1)',
+                              color: '#a0adc4',
+                              title: 'Time (s)',
+                            } as any,
+                            yaxis: {
+                              showgrid: true,
+                              gridcolor: 'rgba(255,107,157,0.1)',
+                              color: '#a0adc4',
+                            } as any,
+                            font: { family: 'IBM Plex Mono, monospace', color: '#a0adc4' } as any,
+                            responsive: true,
+                          } as any}
+                          config={{ responsive: true, displayModeBar: false } as any}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -765,51 +788,52 @@ export default function SignalProcessor() {
                 <div className="space-y-8">
                   <div className="plot-container">
                     <h3 className="tech-label mb-4">AM Signal with AWGN (SNR = {currentResult.snr_input} dB)</h3>
-                    <Plot
-                      data={[
-                        {
-                          x: data.time.slice(0, Math.min(500, data.time.length)),
-                          y: data.am.slice(0, Math.min(500, data.am.length)),
-                          type: 'scatter',
-                          mode: 'lines',
-                          line: { color: 'rgba(0,255,136,0.4)', width: 2 },
-                          name: 'Clean Signal',
-                        },
-                        {
-                          x: data.time.slice(0, Math.min(500, data.time.length)),
-                          y: currentResult.noisy_am.slice(0, Math.min(500, currentResult.noisy_am.length)),
-                          type: 'scatter',
-                          mode: 'lines',
-                          line: { color: '#0099ff', width: 1.5 },
-                          name: 'With Noise',
-                        },
-                      ]}
-                      layout={{
-                        margin: { l: 50, r: 50, t: 30, b: 50 },
-                        paper_bgcolor: 'rgba(0,0,0,0)',
-                        plot_bgcolor: 'rgba(30,41,82,0.2)',
-                        xaxis: {
-                          showgrid: true,
-                          gridcolor: 'rgba(0,153,255,0.1)',
-                          color: '#a0adc4',
-                          title: 'Time (s)',
-                        },
-                        yaxis: {
-                          showgrid: true,
-                          gridcolor: 'rgba(0,153,255,0.1)',
-                          color: '#a0adc4',
-                          title: 'Amplitude',
-                        },
-                        font: { family: 'IBM Plex Mono, monospace', color: '#a0adc4' },
-                        responsive: true,
-                        legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(0,0,0,0.7)', bordercolor: '#0099ff', borderwidth: 1 },
-                      }}
-                      config={{ responsive: true, displayModeBar: false }}
-                      style={{ height: '400px' }}
-                    />
+                    <div className="plot-wrapper plot-wrapper-large">
+                      <Plot
+                        data={[
+                          {
+                            x: data.time.slice(0, Math.min(500, data.time.length)),
+                            y: data.am.slice(0, Math.min(500, data.am.length)),
+                            type: 'scatter',
+                            mode: 'lines',
+                            line: { color: 'rgba(0,255,136,0.4)', width: 2 },
+                            name: 'Clean Signal',
+                          } as any,
+                          {
+                            x: data.time.slice(0, Math.min(500, data.time.length)),
+                            y: currentResult.noisy_am.slice(0, Math.min(500, currentResult.noisy_am.length)),
+                            type: 'scatter',
+                            mode: 'lines',
+                            line: { color: '#0099ff', width: 1.5 },
+                            name: 'With Noise',
+                          } as any,
+                        ]}
+                        layout={{
+                          margin: { l: 50, r: 50, t: 30, b: 50 },
+                          paper_bgcolor: 'rgba(0,0,0,0)',
+                          plot_bgcolor: 'rgba(30,41,82,0.2)',
+                          xaxis: {
+                            showgrid: true,
+                            gridcolor: 'rgba(0,153,255,0.1)',
+                            color: '#a0adc4',
+                            title: 'Time (s)',
+                          } as any,
+                          yaxis: {
+                            showgrid: true,
+                            gridcolor: 'rgba(0,153,255,0.1)',
+                            color: '#a0adc4',
+                            title: 'Amplitude',
+                          } as any,
+                          font: { family: 'IBM Plex Mono, monospace', color: '#a0adc4' } as any,
+                          responsive: true,
+                          legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(0,0,0,0.7)', bordercolor: '#0099ff', borderwidth: 1 } as any,
+                        } as any}
+                        config={{ responsive: true, displayModeBar: false } as any}
+                      />
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="stat-card">
                       <div className="stat-label">SNR (Input)</div>
                       <div className="stat-value">{currentResult.snr_input} dB</div>
@@ -827,51 +851,52 @@ export default function SignalProcessor() {
                 <div className="space-y-8">
                   <div className="plot-container">
                     <h3 className="tech-label mb-4">FM Signal with AWGN (SNR = {currentResult.snr_input} dB)</h3>
-                    <Plot
-                      data={[
-                        {
-                          x: data.time.slice(0, Math.min(500, data.time.length)),
-                          y: data.fm.slice(0, Math.min(500, data.fm.length)),
-                          type: 'scatter',
-                          mode: 'lines',
-                          line: { color: 'rgba(0,255,136,0.4)', width: 2 },
-                          name: 'Clean Signal',
-                        },
-                        {
-                          x: data.time.slice(0, Math.min(500, data.time.length)),
-                          y: currentResult.noisy_fm.slice(0, Math.min(500, currentResult.noisy_fm.length)),
-                          type: 'scatter',
-                          mode: 'lines',
-                          line: { color: '#ff6b9d', width: 1.5 },
-                          name: 'With Noise',
-                        },
-                      ]}
-                      layout={{
-                        margin: { l: 50, r: 50, t: 30, b: 50 },
-                        paper_bgcolor: 'rgba(0,0,0,0)',
-                        plot_bgcolor: 'rgba(30,41,82,0.2)',
-                        xaxis: {
-                          showgrid: true,
-                          gridcolor: 'rgba(255,107,157,0.1)',
-                          color: '#a0adc4',
-                          title: 'Time (s)',
-                        },
-                        yaxis: {
-                          showgrid: true,
-                          gridcolor: 'rgba(255,107,157,0.1)',
-                          color: '#a0adc4',
-                          title: 'Amplitude',
-                        },
-                        font: { family: 'IBM Plex Mono, monospace', color: '#a0adc4' },
-                        responsive: true,
-                        legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(0,0,0,0.7)', bordercolor: '#ff6b9d', borderwidth: 1 },
-                      }}
-                      config={{ responsive: true, displayModeBar: false }}
-                      style={{ height: '400px' }}
-                    />
+                    <div className="plot-wrapper plot-wrapper-large">
+                      <Plot
+                        data={[
+                          {
+                            x: data.time.slice(0, Math.min(500, data.time.length)),
+                            y: data.fm.slice(0, Math.min(500, data.fm.length)),
+                            type: 'scatter',
+                            mode: 'lines',
+                            line: { color: 'rgba(0,255,136,0.4)', width: 2 },
+                            name: 'Clean Signal',
+                          } as any,
+                          {
+                            x: data.time.slice(0, Math.min(500, data.time.length)),
+                            y: currentResult.noisy_fm.slice(0, Math.min(500, currentResult.noisy_fm.length)),
+                            type: 'scatter',
+                            mode: 'lines',
+                            line: { color: '#ff6b9d', width: 1.5 },
+                            name: 'With Noise',
+                          } as any,
+                        ]}
+                        layout={{
+                          margin: { l: 50, r: 50, t: 30, b: 50 },
+                          paper_bgcolor: 'rgba(0,0,0,0)',
+                          plot_bgcolor: 'rgba(30,41,82,0.2)',
+                          xaxis: {
+                            showgrid: true,
+                            gridcolor: 'rgba(255,107,157,0.1)',
+                            color: '#a0adc4',
+                            title: 'Time (s)',
+                          } as any,
+                          yaxis: {
+                            showgrid: true,
+                            gridcolor: 'rgba(255,107,157,0.1)',
+                            color: '#a0adc4',
+                            title: 'Amplitude',
+                          } as any,
+                          font: { family: 'IBM Plex Mono, monospace', color: '#a0adc4' } as any,
+                          responsive: true,
+                          legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(0,0,0,0.7)', bordercolor: '#ff6b9d', borderwidth: 1 } as any,
+                        } as any}
+                        config={{ responsive: true, displayModeBar: false } as any}
+                      />
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="stat-card">
                       <div className="stat-label">SNR (Input)</div>
                       <div className="stat-value">{currentResult.snr_input} dB</div>
@@ -889,50 +914,51 @@ export default function SignalProcessor() {
                 <div className="space-y-8">
                   <div className="plot-container">
                     <h3 className="tech-label mb-4">SNR Comparison: AM vs FM</h3>
-                    <Plot
-                      data={[
-                        {
-                          x: data.results.map((r) => `${r.snr_input} dB`),
-                          y: data.results.map((r) => r.snr_am),
-                          type: 'scatter',
-                          mode: 'lines+markers',
-                          line: { color: '#0099ff', width: 3 },
-                          marker: { size: 10, color: '#0099ff', symbol: 'circle' },
-                          name: 'AM SNR',
-                        },
-                        {
-                          x: data.results.map((r) => `${r.snr_input} dB`),
-                          y: data.results.map((r) => r.snr_fm),
-                          type: 'scatter',
-                          mode: 'lines+markers',
-                          line: { color: '#ff6b9d', width: 3 },
-                          marker: { size: 10, color: '#ff6b9d', symbol: 'square' },
-                          name: 'FM SNR',
-                        },
-                      ]}
-                      layout={{
-                        margin: { l: 50, r: 50, t: 30, b: 50 },
-                        paper_bgcolor: 'rgba(0,0,0,0)',
-                        plot_bgcolor: 'rgba(30,41,82,0.2)',
-                        xaxis: {
-                          showgrid: true,
-                          gridcolor: 'rgba(0,255,136,0.1)',
-                          color: '#a0adc4',
-                          title: 'Input SNR',
-                        },
-                        yaxis: {
-                          showgrid: true,
-                          gridcolor: 'rgba(0,255,136,0.1)',
-                          color: '#a0adc4',
-                          title: 'Output SNR (dB)',
-                        },
-                        font: { family: 'IBM Plex Mono, monospace', color: '#a0adc4' },
-                        responsive: true,
-                        legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(0,0,0,0.7)', bordercolor: '#00ff88', borderwidth: 1 },
-                      }}
-                      config={{ responsive: true, displayModeBar: false }}
-                      style={{ height: '400px' }}
-                    />
+                    <div className="plot-wrapper plot-wrapper-large">
+                      <Plot
+                        data={[
+                          {
+                            x: data.results.map((r) => `${r.snr_input} dB`),
+                            y: data.results.map((r) => r.snr_am),
+                            type: 'scatter',
+                            mode: 'lines+markers',
+                            line: { color: '#0099ff', width: 3 },
+                            marker: { size: 10, color: '#0099ff', symbol: 'circle' },
+                            name: 'AM SNR',
+                          } as any,
+                          {
+                            x: data.results.map((r) => `${r.snr_input} dB`),
+                            y: data.results.map((r) => r.snr_fm),
+                            type: 'scatter',
+                            mode: 'lines+markers',
+                            line: { color: '#ff6b9d', width: 3 },
+                            marker: { size: 10, color: '#ff6b9d', symbol: 'square' },
+                            name: 'FM SNR',
+                          } as any,
+                        ]}
+                        layout={{
+                          margin: { l: 50, r: 50, t: 30, b: 50 },
+                          paper_bgcolor: 'rgba(0,0,0,0)',
+                          plot_bgcolor: 'rgba(30,41,82,0.2)',
+                          xaxis: {
+                            showgrid: true,
+                            gridcolor: 'rgba(0,255,136,0.1)',
+                            color: '#a0adc4',
+                            title: 'Input SNR',
+                          } as any,
+                          yaxis: {
+                            showgrid: true,
+                            gridcolor: 'rgba(0,255,136,0.1)',
+                            color: '#a0adc4',
+                            title: 'Output SNR (dB)',
+                          } as any,
+                          font: { family: 'IBM Plex Mono, monospace', color: '#a0adc4' } as any,
+                          responsive: true,
+                          legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(0,0,0,0.7)', bordercolor: '#00ff88', borderwidth: 1 } as any,
+                        } as any}
+                        config={{ responsive: true, displayModeBar: false } as any}
+                      />
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -954,7 +980,7 @@ export default function SignalProcessor() {
           {/* Educational Info */}
           <div className="mt-16 pt-10 border-t border-opacity-20 border-cyan-400">
             <h2 className="text-2xl font-bold text-green-400 mb-6">Understanding AWGN & SNR</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="info-box">
                 <div className="info-title">What is AWGN?</div>
                 <p>
